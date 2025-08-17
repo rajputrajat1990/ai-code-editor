@@ -1,28 +1,96 @@
 #!/bin/bash
 
 # AI Code Editor Installation Script for macOS
+# Comprehensive installation for systems with no prerequisites
 
 set -e
 
-echo "Installing AI Code Editor..."
+echo "=============================================="
+echo "  AI Code Editor Installation Script"
+echo "  Installing ALL prerequisites from scratch"
+echo "=============================================="
 
 # Check if running with sudo
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run this script with sudo"
+    echo "❌ Please run this script with sudo"
+    echo "   Example: sudo ./install-macos.sh"
     exit 1
 fi
 
-# Install Homebrew if not present
-if ! command -v brew &> /dev/null; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo "📋 Detected system: macOS"
+echo ""
+
+# Get the original user (who called sudo)
+ORIGINAL_USER=${SUDO_USER:-$(logname)}
+ORIGINAL_HOME=$(eval echo ~$ORIGINAL_USER)
+
+echo "👤 Installing for user: $ORIGINAL_USER"
+echo ""
+
+# Install Homebrew if not present (as the original user)
+echo "🍺 Checking Homebrew installation..."
+if ! sudo -u $ORIGINAL_USER command -v brew &> /dev/null; then
+    echo "📦 Installing Homebrew..."
+    sudo -u $ORIGINAL_USER /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    # Add Homebrew to PATH for the session
+    if [[ $(uname -m) == "arm64" ]]; then
+        echo 'export PATH="/opt/homebrew/bin:$PATH"' >> $ORIGINAL_HOME/.zshrc
+        export PATH="/opt/homebrew/bin:$PATH"
+    else
+        echo 'export PATH="/usr/local/bin:$PATH"' >> $ORIGINAL_HOME/.zshrc
+        export PATH="/usr/local/bin:$PATH"
+    fi
+    
+    # Source the updated PATH
+    sudo -u $ORIGINAL_USER source $ORIGINAL_HOME/.zshrc || true
+else
+    echo "✅ Homebrew is already installed"
 fi
 
-# Install Java 11 if not present
-if ! command -v java &> /dev/null; then
-    echo "Installing Java 11..."
-    brew install openjdk@11
-    echo 'export PATH="/opt/homebrew/opt/openjdk@11/bin:$PATH"' >> ~/.zshrc
+# Install Java 21 if not present or wrong version
+echo "☕ Checking Java installation..."
+JAVA_REQUIRED=21
+JAVA_INSTALLED=false
+
+if command -v java &> /dev/null; then
+    JAVA_VERSION=$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1)
+    if [ "$JAVA_VERSION" -ge "$JAVA_REQUIRED" ]; then
+        echo "✅ Java $JAVA_VERSION is already installed"
+        JAVA_INSTALLED=true
+    else
+        echo "⚠️  Java $JAVA_VERSION found, but Java $JAVA_REQUIRED is required"
+    fi
+fi
+
+if [ "$JAVA_INSTALLED" = false ]; then
+    echo "📦 Installing Java 21..."
+    sudo -u $ORIGINAL_USER brew install openjdk@21
+    
+    # Link Java for system use
+    sudo ln -sfn $(brew --prefix)/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+    
+    # Add Java to PATH
+    echo 'export PATH="$(brew --prefix)/opt/openjdk@21/bin:$PATH"' >> $ORIGINAL_HOME/.zshrc
+    export PATH="$(brew --prefix)/opt/openjdk@21/bin:$PATH"
+    
+    # Set JAVA_HOME
+    echo 'export JAVA_HOME="$(brew --prefix)/opt/openjdk@21"' >> $ORIGINAL_HOME/.zshrc
+    export JAVA_HOME="$(brew --prefix)/opt/openjdk@21"
+fi
+
+# Install JavaFX if not present
+echo "🎨 Checking JavaFX installation..."
+if ! brew list | grep -q openjfx; then
+    echo "📦 Installing JavaFX..."
+    sudo -u $ORIGINAL_USER brew install openjfx
+    
+    # Set JavaFX path
+    JAVAFX_PATH="$(brew --prefix)/lib"
+    echo "export JAVAFX_PATH=\"$JAVAFX_PATH\"" >> $ORIGINAL_HOME/.zshrc
+    echo "✅ JavaFX installed at: $JAVAFX_PATH"
+else
+    echo "✅ JavaFX already installed"
 fi
 
 # Install Docker if not present

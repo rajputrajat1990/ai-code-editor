@@ -1,6 +1,11 @@
 package com.aicodeeditor.ui;
 
 import com.aicodeeditor.ai.AIAgent;
+import com.aicodeeditor.ai.EnhancedAIAgent;
+import com.aicodeeditor.ai.OllamaClient;
+import com.aicodeeditor.ai.WebQueryService;
+import com.aicodeeditor.sandbox.SandboxManager;
+import com.aicodeeditor.dependencies.DependencyManager;
 import com.aicodeeditor.core.ConfigurationManager;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -26,7 +31,7 @@ public class MainWindow {
     private static final Logger logger = LoggerFactory.getLogger(MainWindow.class);
     
     private final ConfigurationManager config;
-    private final AIAgent aiAgent;
+    private EnhancedAIAgent aiAgent;
     private Stage primaryStage;
     
     // UI Components
@@ -45,7 +50,7 @@ public class MainWindow {
     
     public MainWindow() {
         this.config = ConfigurationManager.getInstance();
-        this.aiAgent = new AIAgent();
+        // aiAgent will be initialized in initializeAIAgent()
     }
     
     /**
@@ -272,35 +277,43 @@ public class MainWindow {
      * Initialize AI Agent
      */
     private void initializeAIAgent() {
-        Task<Boolean> initTask = new Task<Boolean>() {
-            @Override
-            protected Boolean call() throws Exception {
-                return aiAgent.initialize().get();
-            }
+        try {
+            logger.info("Initializing Enhanced AI Agent...");
             
-            @Override
-            protected void succeeded() {
+            // Get current project directory
+            String projectPath = System.getProperty("user.dir");
+            logger.info("Using project path: {}", projectPath);
+            
+            // Initialize AI services
+            OllamaClient ollamaClient = new OllamaClient();
+            WebQueryService webQueryService = new WebQueryService();
+            SandboxManager sandboxManager = new SandboxManager();
+            DependencyManager dependencyManager = new DependencyManager();
+            
+            // Create enhanced AI agent that works with any model (with permanent memory)
+            aiAgent = new EnhancedAIAgent(ollamaClient, webQueryService, sandboxManager, dependencyManager, projectPath);
+            
+            // Initialize asynchronously
+            aiAgent.initialize().thenRun(() -> {
                 Platform.runLater(() -> {
-                    if (getValue()) {
-                        updateStatus("AI Agent initialized successfully");
-                        addAIChatMessage("AI Assistant", "Hello! I'm ready to help you develop software. What would you like to create today?");
-                    } else {
-                        updateStatus("AI Agent initialization failed");
-                        addAIChatMessage("System", "AI Agent failed to initialize. Please check that Ollama is running.");
+                    logger.info("Enhanced AI Agent with permanent memory initialized successfully - Agent mode active");
+                    if (statusLabel != null) {
+                        statusLabel.setText("Enhanced AI Agent Ready - Agent Mode Active (Memory Enabled)");
                     }
                 });
-            }
-            
-            @Override
-            protected void failed() {
+            }).exceptionally(ex -> {
                 Platform.runLater(() -> {
-                    updateStatus("AI Agent initialization failed");
-                    addAIChatMessage("System", "AI Agent initialization failed: " + getException().getMessage());
+                    logger.error("Failed to initialize Enhanced AI Agent", ex);
+                    showErrorDialog("AI Agent Initialization Failed", 
+                        "Failed to initialize the Enhanced AI Agent: " + ex.getMessage());
                 });
-            }
-        };
-        
-        new Thread(initTask).start();
+                return null;
+            });
+            
+        } catch (Exception e) {
+            logger.error("Error creating Enhanced AI Agent", e);
+            showErrorDialog("AI Agent Error", "Failed to create Enhanced AI Agent: " + e.getMessage());
+        }
     }
     
     /**
@@ -376,7 +389,10 @@ public class MainWindow {
         Task<String> executeTask = new Task<String>() {
             @Override
             protected String call() throws Exception {
-                return aiAgent.executeCode(code, language).get();
+                // For now, use a simple execution approach
+                // In production, this should use the sandbox manager directly
+                String request = "Execute this " + language + " code and show the output:\n" + code;
+                return aiAgent.developSoftware(request).get();
             }
             
             @Override
@@ -421,7 +437,10 @@ public class MainWindow {
         Task<String> aiTask = new Task<String>() {
             @Override
             protected String call() throws Exception {
-                return aiAgent.developSoftware(userInput, languageSelector.getValue()).get().toString();
+                if (aiAgent == null) {
+                    return "AI Agent is not initialized. Please wait for initialization to complete.";
+                }
+                return aiAgent.developSoftware(userInput).get();
             }
             
             @Override
@@ -503,7 +522,10 @@ public class MainWindow {
             Task<String> installTask = new Task<String>() {
                 @Override
                 protected String call() throws Exception {
-                    return aiAgent.installDependencies(language, dependencies).get();
+                    // Use AI agent to handle dependency installation
+                    String request = "Install these " + language + " dependencies: " + String.join(", ", dependencies) + 
+                                   ". Please provide step-by-step installation instructions.";
+                    return aiAgent.developSoftware(request).get();
                 }
                 
                 @Override
@@ -570,8 +592,27 @@ public class MainWindow {
     
     private void handleApplicationExit() {
         logger.info("Application exiting...");
-        aiAgent.shutdown();
+        
+        // Save AI agent memory before closing
+        if (aiAgent != null) {
+            logger.info("Saving AI agent project memory...");
+            aiAgent.shutdown();  // This will save the memory and close the session
+        }
+        
         Platform.exit();
         System.exit(0);
+    }
+    
+    /**
+     * Show error dialog
+     */
+    private void showErrorDialog(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 }

@@ -1,53 +1,145 @@
 @echo off
 REM AI Code Editor Installation Script for Windows
+REM Comprehensive installation for systems with no prerequisites
 
-echo Installing AI Code Editor...
+echo ==============================================
+echo   AI Code Editor Installation Script
+echo   Installing ALL prerequisites from scratch
+echo ==============================================
+echo.
 
 REM Check if running as administrator
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo This script must be run as Administrator.
-    echo Right-click on the script and select "Run as administrator"
+    echo ❌ This script must be run as Administrator.
+    echo    Right-click on the script and select "Run as administrator"
+    echo.
     pause
     exit /b 1
 )
 
-REM Check if Java is installed
+echo 📋 Detected system: Windows
+echo.
+
+REM Create temporary directory for downloads
+set TEMP_DIR=%TEMP%\ai-code-editor-install
+if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%"
+cd /d "%TEMP_DIR%"
+
+REM Check and install Java 21
+echo ☕ Checking Java installation...
 java -version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Java is not installed. Please install Java 11 or higher.
-    echo Download from: https://adoptium.net/
-    pause
-    exit /b 1
+    echo 📦 Java not found. Installing Eclipse Temurin JDK 21...
+    echo    Downloading Java 21 installer...
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/adoptium/temurin21-binaries/releases/latest/download/OpenJDK21U-jdk_x64_windows_hotspot.msi' -OutFile 'temurin-21-jdk.msi'"
+    echo    Installing Java 21...
+    msiexec /i temurin-21-jdk.msi /quiet /norestart ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome
+    if %errorLevel% neq 0 (
+        echo ❌ Java installation failed. Please install manually from https://adoptium.net/
+        pause
+        exit /b 1
+    )
+    echo ✅ Java 21 installed successfully
+    REM Refresh environment variables
+    call refreshenv
+) else (
+    REM Check Java version
+    for /f tokens^=3 %%i in ('java -version 2^>^&1 ^| findstr /i version') do set JAVA_VER=%%i
+    set JAVA_VER=%JAVA_VER:"=%
+    for /f "delims=." tokens=1 %%i in ("%JAVA_VER%") do set JAVA_MAJOR=%%i
+    if %JAVA_MAJOR% LSS 21 (
+        echo ⚠️  Java %JAVA_VER% found, but Java 21+ is required
+        echo 📦 Installing Java 21...
+        powershell -Command "Invoke-WebRequest -Uri 'https://github.com/adoptium/temurin21-binaries/releases/latest/download/OpenJDK21U-jdk_x64_windows_hotspot.msi' -OutFile 'temurin-21-jdk.msi'"
+        msiexec /i temurin-21-jdk.msi /quiet /norestart ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome
+        call refreshenv
+    ) else (
+        echo ✅ Java %JAVA_VER% is compatible
+    )
 )
 
-REM Check if Docker is installed
+REM Check and install JavaFX
+echo 🎨 Checking JavaFX installation...
+set JAVAFX_INSTALLED=0
+if exist "%ProgramFiles%\Java\*javafx*" set JAVAFX_INSTALLED=1
+if exist "%ProgramFiles(x86)%\Java\*javafx*" set JAVAFX_INSTALLED=1
+
+if %JAVAFX_INSTALLED% equ 0 (
+    echo 📦 JavaFX not found. Installing OpenJFX...
+    echo    Downloading OpenJFX...
+    set JAVAFX_VERSION=21.0.1
+    powershell -Command "Invoke-WebRequest -Uri 'https://download2.gluonhq.com/openjfx/%JAVAFX_VERSION%/openjfx-%JAVAFX_VERSION%_windows-x64_bin-sdk.zip' -OutFile 'openjfx.zip'"
+    
+    echo    Extracting OpenJFX...
+    powershell -Command "Expand-Archive -Path 'openjfx.zip' -DestinationPath 'C:\Program Files\Java\' -Force"
+    
+    REM Set JavaFX environment variable
+    for /d %%d in ("C:\Program Files\Java\javafx-sdk-*") do (
+        setx JAVAFX_PATH "%%d\lib" /M
+        echo ✅ JavaFX installed at: %%d\lib
+    )
+    
+    REM Cleanup
+    del openjfx.zip
+) else (
+    echo ✅ JavaFX already installed
+)
+
+REM Check and install Docker
+echo 🐳 Checking Docker installation...
 docker --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Docker is not installed. Please install Docker Desktop.
-    echo Download from: https://www.docker.com/products/docker-desktop
+    echo 📦 Docker not found. Installing Docker Desktop...
+    echo    Downloading Docker Desktop installer...
+    powershell -Command "Invoke-WebRequest -Uri 'https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe' -OutFile 'DockerDesktopInstaller.exe'"
+    echo    Installing Docker Desktop...
+    echo    ⚠️  This may take several minutes and require a system restart
+    start /wait DockerDesktopInstaller.exe install --quiet --accept-license
+    if %errorLevel% neq 0 (
+        echo ❌ Docker installation may have failed
+        echo    Please install manually from https://www.docker.com/products/docker-desktop
+        echo    and restart this script
+        pause
+        exit /b 1
+    )
+    echo ✅ Docker Desktop installed
+    echo ⚠️  Please start Docker Desktop manually and restart this script
     pause
-    exit /b 1
+    exit /b 0
+) else (
+    echo ✅ Docker is already installed
+    REM Check if Docker daemon is running
+    docker info >nul 2>&1
+    if %errorLevel% neq 0 (
+        echo ⚠️  Docker daemon not running. Please start Docker Desktop
+        pause
+    )
 )
 
-REM Check if Maven is installed
+REM Check and install Maven
+echo 🏗️  Checking Maven installation...
 mvn --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Maven is not installed. Please install Maven.
-    echo Download from: https://maven.apache.org/download.cgi
-    pause
-    exit /b 1
+    echo 📦 Maven not found. Installing Apache Maven...
+    echo    Downloading Maven...
+    set MAVEN_VERSION=3.9.5
+    powershell -Command "Invoke-WebRequest -Uri 'https://archive.apache.org/dist/maven/maven-3/%MAVEN_VERSION%/binaries/apache-maven-%MAVEN_VERSION%-bin.zip' -OutFile 'maven.zip'"
+    echo    Extracting Maven...
+    powershell -Command "Expand-Archive -Path 'maven.zip' -DestinationPath 'C:\Program Files\'"
+    ren "C:\Program Files\apache-maven-%MAVEN_VERSION%" "Apache-Maven"
+    
+    REM Add Maven to PATH
+    setx /M PATH "%PATH%;C:\Program Files\Apache-Maven\bin"
+    set PATH=%PATH%;C:\Program Files\Apache-Maven\bin
+    
+    REM Set MAVEN_HOME
+    setx /M MAVEN_HOME "C:\Program Files\Apache-Maven"
+    
+    echo ✅ Maven installed successfully
+) else (
+    echo ✅ Maven is already installed
 )
-
-REM Check if Ollama is installed
-ollama --version >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Installing Ollama...
-    powershell -Command "Invoke-WebRequest -Uri https://ollama.ai/download/windows -OutFile ollama-installer.exe"
-    ollama-installer.exe
-    del ollama-installer.exe
-    echo Please restart this script after Ollama installation completes.
-    pause
     exit /b 0
 )
 
