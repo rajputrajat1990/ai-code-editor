@@ -1,0 +1,61 @@
+/* Syntax highlighting for code editor */
+
+.code-area {
+    -fx-font-family: 'Courier New', monospace;
+    -fx-font-size: 14px;
+}
+
+.code-area .text {
+    -fx-fill: #ffffff;
+}
+
+/* Keywords */
+.keyword {
+    -fx-fill: #569cd6;
+    -fx-font-weight: bold;
+}
+
+/* Strings */
+.string {
+    -fx-fill: #d69e2e;
+}
+
+/* Comments */
+.comment {
+    -fx-fill: #6a9955;
+    -fx-font-style: italic;
+}
+
+/* Numbers */
+.number {
+    -fx-fill: #b5cea8;
+}
+
+/* Operators */
+.operator {
+    -fx-fill: #d4d4d4;
+}
+
+/* Brackets */
+.bracket {
+    -fx-fill: #ffd700;
+}
+
+/* Function names */
+.function {
+    -fx-fill: #dcdcaa;
+}
+
+/* Variable names */
+.variable {
+    -fx-fill: #9cdcfe;
+}
+
+/* Line numbers */
+.lineno {
+    -fx-background-color: #2d2d30;
+    -fx-text-fill: #858585;
+    -fx-font-family: 'Courier New', monospace;
+    -fx-font-size: 12px;
+    -fx-padding: 0 5 0 5;
+}

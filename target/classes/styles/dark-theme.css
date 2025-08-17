@@ -1,0 +1,118 @@
+/* Dark theme for AI Code Editor */
+
+.root {
+    -fx-base: #2b2b2b;
+    -fx-background: #2b2b2b;
+    -fx-control-inner-background: #3c3c3c;
+    -fx-control-inner-background-alt: #4a4a4a;
+    -fx-accent: #0096c9;
+    -fx-default-button: #0096c9;
+    -fx-focus-color: #039ed3;
+    -fx-text-fill: #ffffff;
+}
+
+.menu-bar {
+    -fx-background-color: #2b2b2b;
+}
+
+.menu-item {
+    -fx-background-color: #2b2b2b;
+}
+
+.menu-item:focused {
+    -fx-background-color: #3c3c3c;
+}
+
+.text-area {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 0;
+    -fx-border-color: #555555;
+}
+
+.text-area .content {
+    -fx-background-color: #2b2b2b;
+}
+
+.text-field {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #555555;
+}
+
+.button {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #555555;
+}
+
+.button:hover {
+    -fx-background-color: #4a4a4a;
+}
+
+.button:pressed {
+    -fx-background-color: #0096c9;
+}
+
+.combo-box {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #3c3c3c;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: #4a4a4a;
+}
+
+.titled-pane {
+    -fx-text-fill: #ffffff;
+}
+
+.titled-pane > .title {
+    -fx-background-color: #3c3c3c;
+    -fx-text-fill: #ffffff;
+}
+
+.titled-pane > *.content {
+    -fx-background-color: #2b2b2b;
+}
+
+.split-pane {
+    -fx-background-color: #2b2b2b;
+}
+
+.split-pane-divider {
+    -fx-background-color: #555555;
+}
+
+.label {
+    -fx-text-fill: #ffffff;
+}
+
+.progress-indicator {
+    -fx-progress-color: #0096c9;
+}
+
+.scroll-bar {
+    -fx-background-color: #2b2b2b;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #2b2b2b;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #555555;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #666666;
+}
