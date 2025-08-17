@@ -2,37 +2,46 @@
 
 A lightweight, cross-platform code editor with AI agent capabilities that can develop software autonomously.
 
+## 🚀 Quick Install (One Command)
+
+**Linux/macOS/WSL:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/rajputrajat1990/ai-code-editor/master/bootstrap.sh | bash
+```
+
+This single command will:
+- Detect your OS automatically
+- Install all dependencies (Java 21, Maven, Docker, Ollama)
+- Clone the repository  
+- Download AI models
+- Build and install the application
+
 ## Features
 
-- **Cross-Platform**: Runs on Windows, macOS, and Linux (Ubuntu/RHEL)
-- **AI Agent**: Powered by locally hosted Ollama AI models (7B parameters)
+- **Cross-Platform**: Runs on Windows, macOS, and Linux (Ubuntu/RHEL/Fedora/Arch)
+- **AI Agent**: Powered by locally hosted Ollama AI models (7B+ parameters)
 - **Sandbox Environment**: Isolated code execution using Docker containers
 - **Web Querying**: Fact-checking and research capabilities via web search
 - **Automatic Dependencies**: Installs required dependencies automatically
 - **Admin Privileges**: Requires elevated privileges for system operations
 - **Multi-Language Support**: Python, Java, JavaScript, TypeScript, Go, Rust, C/C++, C#, PHP, Ruby
 
-## Prerequisites
+## Manual Installation
 
-1. **Java 11 or higher**
+If you prefer manual installation:
+
+### Prerequisites
+
+1. **Java 21 or higher**
 2. **Docker** - For sandbox environment
 3. **Ollama** - For AI model hosting
-   ```bash
-   # Install Ollama
-   curl -fsSL https://ollama.ai/install.sh | sh
-   
-   # Pull a 7B model (e.g., Llama 3.2)
-   ollama pull llama3.2:7b
-   ```
 4. **Maven** - For building the project
 5. **Admin/Root privileges** - Required for running the application
-
-## Installation
 
 ### 1. Clone and Build
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/rajputrajat1990/ai-code-editor.git
 cd ai-code-editor
 mvn clean package
 ```
